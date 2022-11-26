@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>SUBGEN Player</title>
+    <link rel="icon" type="image/x-icon" href="./subgen-logo.ico">
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.tutorialjinni.com/jquery/3.6.1/jquery.min.js"></script>
+    <script src="https://cdn.tutorialjinni.com/notify/0.4.2/notify.min.js"></script>
+
+    <link rel="preload" href="mejs-controls.svg" as="image" type="image/svg+xml">
+    <script src="mediaelement-and-player.min.js"></script>
+    <link rel="stylesheet" href="mediaelementplayer.css" />
+
+    <link rel="stylesheet" href="./index.css">
+
+    <!-- Include eel.js - note this file doesn't exist in the 'web' directory -->
+    <script type="text/javascript" src="/eel.js"></script>
+    <script type="text/javascript">
+
+        eel.expose(say_hello_js);               // Expose this function to Python
+        function say_hello_js(x) {
+            console.log("Hello from " + x);
+        }
+
+        say_hello_js("Javascript World!");
+        eel.say_hello_py("Javascript World!");  // Call a Python function
+
+    </script>
+
+</head>
+
+<body>
+
+    <video id="player" width="984px" height="529px" poster="subgen-full.png" controls="controls" preload="none">
+        <source type="video/mp4" src="" />
+        <div id="track">
+            <track id="subtitles" kind="subtitles" src="" srclang="en" />
+        </div>
+    </video>
+
+    <div class="loading animated fadeIn">
+        <div class="bg" id="loading" hidden></div>
+    </div>
+    <div class="mx-3 my-3">
+        <form>
+            <div class="row">
+                <div class="col-3">
+                    <div class="custom-file">
+                        <input type="file" class="custom-file-input" id="customFile" name="filename"
+                            onchange="fileSelect()" accept=".mp4">
+                        <label class="custom-file-label" for="customFile">Choose file</label>
+                    </div>
+                </div>
+                <div class="col-3">
+                    <select class="form-control" id="language">
+                        <option value="en" selected>English (Native)</option>
+                        <option value="si">Sinhala</option>
+                        <option value="ta">Tamil</option>
+                    </select>
+                </div>
+                <div class="col">
+                    <button id="btn_generate" type="button" class="btn btn-primary" disabled
+                        onclick="generate()">Generate</button>
+                </div>
+                <div class="col-3">
+                    <div class="custom-file">
+                        <input type="file" class="custom-file-input" id="subtitleFile" name="filename"
+                            onchange="subtitleSelect()" accept=".srt">
+                        <label class="custom-file-label" for="subtitleFile">Choose subtitle</label>
+                    </div>
+                </div>
+                <div class="col">
+                    <button id="btn_play" type="button" class="btn btn-primary" disabled onclick="play()">Play</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        function fileSelect() {
+            if (document.getElementById("customFile").value) {
+                document.getElementById('btn_generate').disabled = false;
+                document.getElementById('btn_play').disabled = false;
+            } else {
+                document.getElementById('btn_generate').disabled = true;
+                document.getElementById('btn_play').disabled = true;
+            }
+        }
+
+        function generate() {
+            var file = document.getElementById("customFile").files[0].path;
+            var language = document.getElementById("language").value;
+
+            document.getElementById('loading').hidden = false;
+            document.getElementById('btn_play').disabled = true;
+            document.getElementById('btn_generate').disabled = true;
+            document.getElementById('customFile').disabled = true;
+            document.getElementById('language').disabled = true;
+
+            eel.generate(file, language)
+        }
+
+        eel.expose(end_js);
+        function end_js() {
+            document.getElementById('loading').hidden = true;
+            document.getElementById('btn_play').disabled = false;
+            document.getElementById('btn_generate').disabled = false;
+            document.getElementById('customFile').disabled = false;
+            document.getElementById('language').disabled = false;
+        }
+
+        function subtitleSelect(){
+            var sub = '<track id="subtitles" kind="subtitles" src="' + URL.createObjectURL(document.getElementById("subtitleFile").files[0]) + '" srclang="en"/>';
+
+            document.getElementById('track').innerHTML = sub;
+
+            console.log(sub)
+        }
+
+        function play() {
+            var fileURL = URL.createObjectURL(document.getElementById("customFile").files[0]);
+            var subtitleURL = URL.createObjectURL(document.getElementById("subtitleFile").files[0]);
+
+            // $('#subtitles').attr('src', subtitleURL);
+            // player.findTracks();
+            // player.loadTrack(0);
+            player.setSrc(fileURL);
+            player.load();
+            player.play();
+        }
+    </script>
+
+    <script>
+        // using jQuery
+        $('video,audio').mediaelementplayer(
+            {
+                success: function (mediaElement, domObject) {
+                    player = mediaElement;
+                    object = domObject;
+                }
+            }
+        )
+    </script>
+
+    <script>
+        // Add the following code if you want the name of the file appear on select
+        $(".custom-file-input").on("change", function () {
+            var fileName = $(this).val().split("\\").pop();
+            $(this).siblings(".custom-file-label").addClass("selected").html(fileName);
+        });
+    </script>
+</body>
+
+</html>
